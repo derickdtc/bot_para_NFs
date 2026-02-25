@@ -1,0 +1,86 @@
+{
+  "BTN_ABRIR_NFCE": {
+    "x": 1279,
+    "y": 874
+  },
+  "BTN_NOMES_EM_BRANCO": {
+    "x": 1076,
+    "y": 588
+  },
+  "BTN_NOMES_EM_BRANCO2": {
+    "x": 1076,
+    "y": 588
+  },
+  "BTN_OK_JANELAS": {
+    "x": 1001,
+    "y": 588
+  },
+  "LISTA_DE_NOTAS": {
+    "x": 1084,
+    "y": 191
+  },
+  "BTN_INCLUIR_ITENS": {
+    "x": 828,
+    "y": 869
+  },
+  "CAMPO_BUSCA_PRODUTO": {
+    "x": 406,
+    "y": 729
+  },
+  "PRIMEIRO_ITEM_LISTA": {
+    "x": 1056,
+    "y": 254
+  },
+  "CAMPO_QUANTIDADE": {
+    "x": 1048,
+    "y": 541
+  },
+  "CAMPO_VALOR_UNIT": {
+    "x": 1057,
+    "y": 651
+  },
+  "BTN_NOTA_PARA_IMPOSTOS": {
+    "x": 898,
+    "y": 417
+  },
+  "CAMPO_CSOSN": {
+    "x": 915,
+    "y": 426
+  },
+  "CAMPO_CFOP": {
+    "x": 908,
+    "y": 464
+  },
+  "CHECKBOX_TRIBUTO_TODOS": {
+    "x": 748,
+    "y": 773
+  },
+  "BTN_SALVAR_IMPOSTOS": {
+    "x": 936,
+    "y": 846
+  },
+  "BTN_CONFIRMAR_IMPOSTOS": {
+    "x": 1017,
+    "y": 588
+  },
+  "BTN_TRANSMITIR": {
+    "x": 896,
+    "y": 909
+  },
+  "CAMPO_DINHEIRO": {
+    "x": 917,
+    "y": 645
+  },
+  "CAMPO_PAGAMENTO": {
+    "x": 806,
+    "y": 246
+  },
+  "OPCAO_CARTAO_CREDITO": {
+    "x": 788,
+    "y": 304
+  },
+  "BTN_FECHAR_PREVIEW": {
+    "x": 1884,
+    "y": 8
+  }
+}
