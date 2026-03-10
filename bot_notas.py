@@ -10,11 +10,11 @@ import pyautogui
 import pyperclip
 
 # --- CONFIGURACOES ---
-TEMPO_DE_TRABALHO_MINUTOS = 60
-PAUSA_MINIMA = 60
-PAUSA_MAXIMA = 120
-META_VALOR_NOTA = (50, 60)
-MARGEM_SUPERIOR_META = 70
+TEMPO_DE_TRABALHO_MINUTOS = 30
+PAUSA_MINIMA = 10
+PAUSA_MAXIMA = 15
+META_VALOR_NOTA = (50, 350)
+MARGEM_SUPERIOR_META = 100
 ARQUIVO_COORDENADAS = Path(__file__).with_name("coordenadas.json")
 PONTOS_CALIBRAGEM = [
     "BTN_ABRIR_NFCE",
@@ -23,6 +23,7 @@ PONTOS_CALIBRAGEM = [
     "BTN_OK_JANELAS",
     "LISTA_DE_NOTAS",
     "BTN_INCLUIR_ITENS",
+    "BTN_REMOVER_ITENS",
     "CAMPO_BUSCA_PRODUTO",
     "PRIMEIRO_ITEM_LISTA",
     "CAMPO_QUANTIDADE",
@@ -42,7 +43,7 @@ PONTOS_CALIBRAGEM = [
 
 # Deixe True para acompanhar a automacao mais devagar.
 MODO_LENTO_DEBUG = True
-FATOR_LENTO = 2.2 if MODO_LENTO_DEBUG else 1.0
+FATOR_LENTO = 1.5 if MODO_LENTO_DEBUG else 1.0
 pyautogui.PAUSE = 0.12 * FATOR_LENTO
 
 
@@ -208,7 +209,7 @@ def atualizar_valor_unitario(coords):
 
 
 def atualizar_quantidade(coords, qtd):
-    for tentativa in range(1, 4):
+    for tentativa in range(1, 5):
         escrever_campo(coords, "CAMPO_QUANTIDADE", str(qtd))
         valor_lido = copiar_campo(coords, "CAMPO_QUANTIDADE")
         if valor_lido.startswith(str(qtd)):
@@ -224,9 +225,10 @@ def limpar_e_preencher_campo(coords, campo, valor):
 
 
 def abrir_nota_para_impostos(coords):
-    #selecionar_ultima_nota(coords)
-    pyautogui.doubleClick(coords["BTN_NOTA_PARA_IMPOSTOS"])
-    pausa(2.2)
+    pyautogui.click(coords["BTN_NOTA_PARA_IMPOSTOS"])
+    pausa(1.0)
+    pyautogui.press("enter")
+    pausa(0.3)
 
 
 def abrir_nota_para_transmissao(coords):
@@ -262,11 +264,7 @@ def selecionar_ultima_nota(coords):
     pausa(0.12)
     pyautogui.press("end")
     pausa(0.3)
-
-    # Ancora explicitamente na linha da ultima nota calibrada.
-    # E apenas selecao de linha (clique simples), sem abrir formulario.
-    #pyautogui.click(coords["BTN_NOTA_PARA_IMPOSTOS"])
-    #pausa(0.25)
+ 
 
 
 def normalizar_posicao(posicao):
@@ -425,10 +423,24 @@ def preparar_coordenadas():
 
         print("[warn] Opcao invalida.")
 
+def remover_item(coords):    
+        pyautogui.click(coords["BTN_NOTA_PARA_IMPOSTOS"])
+        pausa(0.3)
+        pyautogui.press("end")
+        pausa(0.12)
+        pyautogui.click(coords["BTN_REMOVER_ITENS"])
+        pausa(0.4)
+        pyautogui.press("enter")
+        pausa(1.0)
+
+
+
 
 def trabalhar(coords):
+    ITENS_POR_NOTA = 0
+
     pyautogui.click(coords["BTN_ABRIR_NFCE"])
-    pausa(2.2)
+    pausa(1.5)
     pyautogui.click(coords["BTN_NOMES_EM_BRANCO"])
     pausa(0.5)
     pyautogui.click(coords["BTN_NOMES_EM_BRANCO2"])
@@ -464,7 +476,7 @@ def trabalhar(coords):
         pyautogui.click(coords["PRIMEIRO_ITEM_LISTA"])
         pausa(0.6)
 
-        descidas = random.randint(0, 10)
+        descidas = random.randint(0, 18)
         for _ in range(descidas):
             pyautogui.press("down")
             pausa(0.15)
@@ -472,7 +484,7 @@ def trabalhar(coords):
         pyautogui.press("enter")
         pausa(2.0)
 
-        qtd = random.randint(1, 2)
+        qtd = random.randint(1, 5)
         qtd_ok = atualizar_quantidade(coords, qtd)
         if not qtd_ok:
             print("   [warn] Quantidade nao confirmou, seguindo com valor digitado.")
@@ -480,7 +492,7 @@ def trabalhar(coords):
         preco_venda = atualizar_valor_unitario(coords)
 
         pyautogui.press("enter")
-        pausa(2.2)
+        pausa(2.0)
 
         valor_total_item = qtd * preco_venda
         valor_atual_nota += valor_total_item
@@ -489,18 +501,25 @@ def trabalhar(coords):
             f"Total acumulado: {valor_atual_nota:.2f}"
         )
 
+        ITENS_POR_NOTA += 1
+
         if valor_atual_nota >= meta:
             if valor_atual_nota <= limite_superior:
                 print(
                     f"   Meta atingida dentro da margem: "
                     f"{valor_atual_nota:.2f} em [{meta:.2f}, {limite_superior:.2f}]"
                 )
+            elif ITENS_POR_NOTA == 1:
+                print(" O limite superior foi ultrapassado com apenas 1 item. Aceitando nota acima do limite por questões de viabilidade.")
             else:
+                removeu = remover_item(coords)                
+                valor_atual_nota -= valor_total_item
                 print(
-                    f"   [warn] Meta ultrapassada acima da margem: "
-                    f"{valor_atual_nota:.2f} > {limite_superior:.2f}. "
-                    "Transmitindo para evitar loop preso."
-                )
+                    "   Valor ultrapassou o limite superior, item removido. "
+                    f"Total ajustado: {valor_atual_nota:.2f}"
+                )           
+                     
+                 
             break
 
         pausa(1.0)
@@ -508,9 +527,9 @@ def trabalhar(coords):
     print("   Aplicando impostos...")
     abrir_nota_para_impostos(coords)
 
-    pyautogui.keyUp("ctrl")
-    pyautogui.keyUp("shift")
-    pyautogui.keyUp("alt")
+    #pyautogui.keyUp("ctrl")
+    #pyautogui.keyUp("shift")
+    #pyautogui.keyUp("alt")
     limpar_e_preencher_campo(coords, "CAMPO_CSOSN", "102")
     limpar_e_preencher_campo(coords, "CAMPO_CFOP", "5102")
 
@@ -534,7 +553,7 @@ def trabalhar(coords):
     pyautogui.press("backspace")
 
     pyautogui.click(coords["BTN_TRANSMITIR"])
-    pausa(5.5)
+    pausa(1.0)
     pyautogui.click(coords["BTN_FECHAR_PREVIEW"])
     print("Nota finalizada com sucesso.")
 
