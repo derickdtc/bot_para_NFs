@@ -10,11 +10,11 @@ import pyautogui
 import pyperclip
 
 # --- CONFIGURACOES ---
-TEMPO_DE_TRABALHO_MINUTOS = 30
-PAUSA_MINIMA = 10
-PAUSA_MAXIMA = 15
-META_VALOR_NOTA = (50, 350)
-MARGEM_SUPERIOR_META = 100
+TEMPO_DE_TRABALHO_MINUTOS = 10
+PAUSA_MINIMA = 5
+PAUSA_MAXIMA = 10
+META_VALOR_NOTA = (20, 70)
+MARGEM_SUPERIOR_META = 50
 ARQUIVO_COORDENADAS = Path(__file__).with_name("coordenadas.json")
 PONTOS_CALIBRAGEM = [
     "BTN_ABRIR_NFCE",
@@ -28,7 +28,7 @@ PONTOS_CALIBRAGEM = [
     "PRIMEIRO_ITEM_LISTA",
     "CAMPO_QUANTIDADE",
     "CAMPO_VALOR_UNIT",
-    "BTN_NOTA_PARA_IMPOSTOS",
+    "BTN_ITEM_PARA_IMPOSTOS",
     "CAMPO_CSOSN",
     "CAMPO_CFOP",
     "CHECKBOX_TRIBUTO_TODOS",
@@ -209,7 +209,7 @@ def atualizar_valor_unitario(coords):
 
 
 def atualizar_quantidade(coords, qtd):
-    for tentativa in range(1, 5):
+    for tentativa in range(1, 2):
         escrever_campo(coords, "CAMPO_QUANTIDADE", str(qtd))
         valor_lido = copiar_campo(coords, "CAMPO_QUANTIDADE")
         if valor_lido.startswith(str(qtd)):
@@ -224,11 +224,22 @@ def limpar_e_preencher_campo(coords, campo, valor):
     escrever_campo(coords, campo, valor)
 
 
-def abrir_nota_para_impostos(coords):
-    pyautogui.click(coords["BTN_NOTA_PARA_IMPOSTOS"])
-    pausa(1.0)
+def selecionar_item_para_impostos(coords):
+    pyautogui.keyUp("ctrl")
+    pyautogui.keyUp("shift")
+    pyautogui.keyUp("alt")
+    pyautogui.click(coords["BTN_ITEM_PARA_IMPOSTOS"])
+    print("   Item selecionado para aplicacao de impostos.")
+    pausa(0.4)
+
+
+def abrir_item_para_impostos(coords):
+    selecionar_item_para_impostos(coords)
+    # Apos remocao o primeiro clique pode ser absorvido pelo fechamento do popup.
+    pyautogui.click(coords["BTN_ITEM_PARA_IMPOSTOS"])
+    pausa(0.2)
     pyautogui.press("enter")
-    pausa(0.3)
+    pausa(0.6)
 
 
 def abrir_nota_para_transmissao(coords):
@@ -244,8 +255,8 @@ def selecionar_ultima_nota(coords):
     pyautogui.keyUp("alt")
     pyautogui.click(coords["LISTA_DE_NOTAS"])
     pausa(0.35)
-    pyautogui.click(coords["LISTA_DE_NOTAS"])
-    pausa(0.2)
+   # pyautogui.click(coords["LISTA_DE_NOTAS"])
+    #pausa(0.2)
 
     # Forca navegacao para o fim por teclado.
     pyautogui.hotkey("ctrl", "end")
@@ -255,15 +266,10 @@ def selecionar_ultima_nota(coords):
     pyautogui.hotkey("ctrl", "end")
     pausa(0.12)
     pyautogui.press("end")
+    print("   Ultima nota selecionada.")
     pausa(0.12)
+    
 
-    # Forca rolagem para baixo em listas que ignoram parte dos atalhos.
-    pyautogui.scroll(-3000)
-    pausa(0.12)
-    pyautogui.scroll(-3000)
-    pausa(0.12)
-    pyautogui.press("end")
-    pausa(0.3)
  
 
 
@@ -423,15 +429,13 @@ def preparar_coordenadas():
 
         print("[warn] Opcao invalida.")
 
-def remover_item(coords):    
-        pyautogui.click(coords["BTN_NOTA_PARA_IMPOSTOS"])
-        pausa(0.3)
-        pyautogui.press("end")
-        pausa(0.12)
-        pyautogui.click(coords["BTN_REMOVER_ITENS"])
-        pausa(0.4)
-        pyautogui.press("enter")
-        pausa(1.0)
+def remover_item(coords):
+    selecionar_item_para_impostos(coords)
+    pyautogui.press("end")
+    pausa(0.12)
+    pyautogui.click(coords["BTN_REMOVER_ITENS"])
+    pausa(0.4)
+
 
 
 
@@ -510,26 +514,20 @@ def trabalhar(coords):
                     f"{valor_atual_nota:.2f} em [{meta:.2f}, {limite_superior:.2f}]"
                 )
             elif ITENS_POR_NOTA == 1:
-                print(" O limite superior foi ultrapassado com apenas 1 item. Aceitando nota acima do limite por questões de viabilidade.")
-            else:
-                removeu = remover_item(coords)                
-                valor_atual_nota -= valor_total_item
-                print(
-                    "   Valor ultrapassou o limite superior, item removido. "
-                    f"Total ajustado: {valor_atual_nota:.2f}"
-                )           
+                print(" O limite superior foi ultrapassado com apenas 1 item. Aceitando nota acima do limite por questões de viabilidade.")         
                      
                  
             break
 
         pausa(1.0)
 
-    print("   Aplicando impostos...")
-    abrir_nota_para_impostos(coords)
+    if valor_atual_nota > limite_superior and ITENS_POR_NOTA > 1:
+         remover_item(coords)
+         print("   Valor ultrapassou o limite superior, item removido.")
+         #pyautogui.click(coords["BTN_ITEM_PARA_IMPOSTOS"])   
 
-    #pyautogui.keyUp("ctrl")
-    #pyautogui.keyUp("shift")
-    #pyautogui.keyUp("alt")
+    print("   Aplicando impostos...")
+    abrir_item_para_impostos(coords)
     limpar_e_preencher_campo(coords, "CAMPO_CSOSN", "102")
     limpar_e_preencher_campo(coords, "CAMPO_CFOP", "5102")
 
@@ -542,7 +540,7 @@ def trabalhar(coords):
 
     print("   Finalizando nota...")
     abrir_nota_para_transmissao(coords)
-
+"""
     pyautogui.click(coords["CAMPO_PAGAMENTO"])
     pausa(0.6)
     pyautogui.click(coords["OPCAO_CARTAO_CREDITO"])
@@ -556,7 +554,7 @@ def trabalhar(coords):
     pausa(1.0)
     pyautogui.click(coords["BTN_FECHAR_PREVIEW"])
     print("Nota finalizada com sucesso.")
-
+"""
 
 if __name__ == "__main__":
     coords = preparar_coordenadas()
